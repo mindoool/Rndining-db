@@ -4,12 +4,12 @@ from . import api
 from application import db
 from application.models.meal import Meal
 from application.models.mixin import SerializableModelMixin
-from application.lib.rest.auth_helper import required_token
+from application.lib.rest.auth_helper import required_token, required_admin
 
 
-@api.route('/meal', methods=['POST'])
+@api.route('/meals', methods=['POST'])
 @required_token
-def create_meal(request_user_id=None):
+def create_meals():
     """
     ms
     :param request_user_id:
@@ -38,9 +38,8 @@ def create_meal(request_user_id=None):
             userMessage="카테고리 정보를 기입해주세요."
         ), 400
 
-
     # 이미 등록되어있는지 확인
-    q = db.session.query(AsIs).filter(AsIs.user_id == request_user_id, AsIs.content == content)
+    q = db.session.query(Meal).filter(Meal.day == day, Meal.time == time, Meal.category == category)
     if q.count() > 0:
         return jsonify(
             userMessage="이미 기입되어 있는 내용입니다."
@@ -50,14 +49,128 @@ def create_meal(request_user_id=None):
         for key in request_params.keys():
             request_params[SerializableModelMixin.to_snakecase(key)] = request_params.pop(key)
 
-        as_is = AsIs(**request_params)
-        db.session.add(as_is)
+        meal = Meal(**request_params)
+        db.session.add(meal)
         db.session.commit()
 
         return jsonify(
-            data=as_is.serialize()
+            data=meal.serialize()
         ), 200
     except:
         return jsonify(
-            userMessage="server deny your request, check param value"
+            userMessage="오류가 발생했습니다. 관리자에게 문의해주세요."
         ), 403
+
+
+# read 개별
+@api.route('/meals/<int:meal_id>', methods=['GET'])
+@required_token
+def get_meal_by_id(meal_id):
+    """
+    ms
+    :param meal_id:
+    :return:
+    """
+    try:
+        meal = db.session.query(Meal).get(meal_id)
+        return jsonify(
+            data=meal.serialize()
+        ), 200
+
+    except:
+        return jsonify(
+            userMessage="해당 식단을 찾을 수 없습니다."
+        ), 404
+
+
+# read
+@api.route('/meals', methods=['GET'])
+@required_token
+def get_meals():
+    """
+    ms
+    :return: request_user_id
+    """
+    q = db.session.query(Meal)
+
+    day = request.args.get('day')
+    time = request.args.get('time')
+    category = request.args.get('category')
+
+    if day is not None:
+        q = q.filter(Meal.day == day)
+
+    if time is not None:
+        q = q.filter(Meal.time == time)
+
+    if category is not None:
+        q = q.filter(Meal.category == category)
+
+    return jsonify(
+        data=map(lambda obj: obj.serialize(), q)
+    ), 200
+
+
+# update
+@api.route('/meals/<int:meal_id>', methods=['PUT'])
+@required_token
+def update_meal(meal_id):
+    """
+    :param meal_id:
+    :return:
+    """
+    meal = db.session.query(Meal).get(meal_id)
+
+    if meal is None:
+        return jsonify(
+            userMessage="식단을 찾을 수 없습니다."
+        ), 404
+
+    request_params = request.get_json()
+    day = request_params.get('day')
+    time = request_params.get('time')
+    category = request_params.get('category')
+
+    if day not in ['월요일', '화요일', '수요일', '목요일', '금요일']:
+        return jsonify(
+            userMessage="'월요일', '화요일', '수요일', '목요일', '금요일' 중 선택해주세요."
+        ), 403
+
+    if time not in ['아침', '점심', '저녁']:
+        return jsonify(
+            userMessage="'아침', '점심', '저녁' 중 선택해주세요."
+        ), 403
+
+    if category not in ['라면', '샐러드', '간편식', '한식','양식', '석식', '석식-면']:
+        return jsonify(
+            userMessage="'라면', '샐러드', '간편식', '한식','양식', '석식', '석식-면' 중 선택해주세요."
+        ), 403
+
+    meal = meal.update_data(**request_params)
+    db.session.commit()
+
+    return get_meal_by_id(meal_id)
+
+
+# delete 필요없을듯하당
+@api.route('/meals/<int:meal_id>', methods=['DELETE'])
+@required_admin
+def delete_meal(meal_id):
+    try:
+        meal = db.session.query(Meal).get(meal_id)
+
+        try:
+            db.session.delete(meal)
+            db.session.commit()
+            return jsonify(
+                userMessage="삭제가 완료되었습니다."
+            ), 200
+        except:
+            return jsonify(
+                userMessage="삭제 실패."
+            ), 403
+
+    except:
+        return jsonify(
+            userMessage="식단을 찾을 수 없습니다."
+        ), 404
