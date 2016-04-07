@@ -15,6 +15,7 @@ class User(db.Model, TimeStampMixin, SerializableModelMixin):
     password = db.Column(db.String(200), nullable=False)
     nickname = db.Column(db.String(30), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)
     # is_activated = db.Column(db.Boolean, default=True)
 
 
