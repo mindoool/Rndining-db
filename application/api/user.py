@@ -179,5 +179,5 @@ def delete_user(user_id, request_user_id=None):
 
     except:
         return jsonify(
-                userMessage="error try again"
+                userMessage="삭제 실패"
         ), 400
