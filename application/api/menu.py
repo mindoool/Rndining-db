@@ -10,11 +10,6 @@ from application.lib.rest.auth_helper import required_token, required_admin
 @api.route('/menus', methods=['POST'])
 @required_token
 def create_menus():
-    """
-    ms
-    :param request_user_id:
-    :return:
-    """
     request_params = request.get_json()
     name = request_params.get('name')
     category = request_params.get('category')
@@ -53,3 +48,95 @@ def create_menus():
         return jsonify(
             userMessage="오류가 발생했습니다. 관리자에게 문의해주세요."
         ), 403
+
+
+# read
+@api.route('/menus', methods=['GET'])
+@required_token
+def get_menu_by_id(menu_id):
+    try:
+        menu = db.session.query(Menu).get(menu_id)
+        return jsonify(
+            data=menu.serialize()
+        ), 200
+
+    except:
+        return jsonify(
+            userMessage="해당 메뉴를 찾을 수 없습니다."
+        ), 404
+
+
+# read
+@api.route('/menus', methods=['GET'])
+@required_token
+def get_menus():
+    q = db.session.query(Menu)
+
+    name = request.args.get('name')
+    category = request.args.get('category')
+
+    if name is not None:
+        q = q.filter(Menu.name == name)
+
+    if category is not None:
+        q = q.filter(Menu.category == category)
+
+    return jsonify(
+        data=map(lambda obj: obj.serialize(), q)
+    ), 200
+
+
+# update
+@api.route('/menus/<int:menu_id>', methods=['PUT'])
+@required_token
+def update_menu(menu_id):
+    menu = db.session.query(Menu).get(menu_id)
+
+    if menu is None:
+        return jsonify(
+            userMessage="메뉴를 찾을 수 없습니다."
+        ), 404
+
+    request_params = request.get_json()
+    name = request_params.get('name')
+    category = request_params.get('category')
+
+    if name is not None:
+        from sqlalchemy.exc import IntegrityError
+        try:
+            menu.name = name
+        except IntegrityError as e:
+            return jsonify(
+                userMessage="기존에 동일한 이름의 메뉴가 있습니다."
+            )
+
+    if category is not None:
+        menu.category = category
+
+    db.session.commit()
+
+    return get_menu_by_id(menu_id)
+
+
+# delete 필요없을듯하당
+@api.route('/menus/<int:menu_id>', methods=['DELETE'])
+@required_admin
+def delete_menu(menu_id):
+    try:
+        menu = db.session.query(Menu).get(menu_id)
+
+        try:
+            db.session.delete(menu)
+            db.session.commit()
+            return jsonify(
+                userMessage="삭제가 완료되었습니다."
+            ), 200
+        except:
+            return jsonify(
+                userMessage="삭제 실패."
+            ), 403
+
+    except:
+        return jsonify(
+            userMessage="메뉴를 찾을 수 없습니다."
+        ), 404
