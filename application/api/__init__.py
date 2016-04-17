@@ -3,5 +3,8 @@ from flask import Blueprint
 api = Blueprint('api', __name__)
 
 from . import (
-    meal
+    meal,
+    meal_date,
+    menu,
+    user
 )
