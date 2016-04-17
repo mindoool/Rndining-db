@@ -1,9 +1,9 @@
-# coding: utf8
+# -*- coding: utf-8 -*-
 import re
 from json import dumps as json_dumps
 from json import loads as json_loads
 from calendar import timegm
-from app import db
+from application import db
 
 
 class TimeStampMixin(object):

@@ -131,17 +131,17 @@ def update_meal(meal_id):
     time = request_params.get('time')
     category = request_params.get('category')
 
-    if day not in ['월요일', '화요일', '수요일', '목요일', '금요일']:
+    if day not in ['mon', 'tue', 'wed', 'thu', 'fri']:
         return jsonify(
             userMessage="'월요일', '화요일', '수요일', '목요일', '금요일' 중 선택해주세요."
         ), 403
 
-    if time not in ['아침', '점심', '저녁']:
+    if time not in ['morning', 'lunch', 'dinner']:
         return jsonify(
             userMessage="'아침', '점심', '저녁' 중 선택해주세요."
         ), 403
 
-    if category not in ['라면', '샐러드', '간편식', '한식','양식', '석식', '석식-면']:
+    if category not in ['noodle', 'salad', 'takeout', 'korean','western', 'dinner', 'dinner-noodle']:
         return jsonify(
             userMessage="'라면', '샐러드', '간편식', '한식','양식', '석식', '석식-면' 중 선택해주세요."
         ), 403
