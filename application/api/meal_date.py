@@ -4,12 +4,13 @@ from flask import request, jsonify
 from . import api
 from application import db
 from application.models.meal_date import MealDate
+from application.models.meal import Meal
 from application.models.mixin import SerializableModelMixin
 from application.lib.rest.auth_helper import required_token, required_admin
 
 
 @api.route('/meal-dates', methods=['POST'])
-@required_token
+# @required_token
 def create_meal_dates():
     request_params = request.get_json()
     date = request_params.get('date').split('-')
@@ -57,12 +58,14 @@ def create_meal_dates():
 
 # read 개별
 @api.route('/meal-dates/<int:meal_date_id>', methods=['GET'])
-@required_token
+# @required_token
 def get_meal_date_by_id(meal_date_id):
     try:
-        meal_date = db.session.query(MealDate).get(meal_date_id)
+        meal_date = db.session.query(MealDate, Meal) \
+            .join(Meal, Meal.id == MealDate.meal_id) \
+            .filter(MealDate.id == meal_date_id)
         return jsonify(
-            data=meal_date.serialize()
+            data=SerializableModelMixin.serialize_row(meal_date.one())
         ), 200
 
     except:
@@ -72,10 +75,11 @@ def get_meal_date_by_id(meal_date_id):
 
 
 # read
-@api.route('/meals', methods=['GET'])
-@required_token
+@api.route('/meal-dates', methods=['GET'])
+# @required_token
 def get_meal_dates():
-    q = db.session.query(MealDate)
+    q = db.session.query(MealDate, Meal) \
+        .join(Meal, Meal.id == MealDate.meal_id)
 
     date = request.args.get('date')
     meal_id = request.args.get('mealId')
@@ -88,15 +92,16 @@ def get_meal_dates():
         q = q.filter(MealDate.meal_id == meal_id)
 
     return jsonify(
-        data=map(lambda obj: obj.serialize(), q)
+        # data=map(lambda obj: obj.serialize(), q)
+        data=map(SerializableModelMixin.serialize_row, q)
     ), 200
 
 
 # update
 @api.route('/meal-dates/<int:meal_date_id>', methods=['PUT'])
-@required_token
+# @required_token
 def update_meal_date(meal_date_id):
-    meal_date = db.session.query(MealDate).get(meal_date_id)
+    meal_date = db.session.query(MealDate).filter(MealDate.id == meal_date_id).one()
 
     if meal_date is None:
         return jsonify(
@@ -104,36 +109,36 @@ def update_meal_date(meal_date_id):
         ), 404
 
     request_params = request.get_json()
-    date = request_params.get('date').split('-')
-    date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
-    meal_id = request_params.get('mealId')
+    if request_params.get('date'):
+        date = request_params.get('date').split('-')
+        date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
+    else:
+        date_object = meal_date.date
 
-    if date is not None:
-        from sqlalchemy.exc import IntegrityError
-        try:
-            meal_date.date = date_object
-        except IntegrityError as e:
+    if request_params.get('mealId'):
+        meal_id = request_params.get('mealId')
+    else:
+        meal_id = meal_date.meal_id
+
+    q = db.session.query(MealDate).filter(MealDate.meal_id == meal_id, MealDate.date == date_object)
+    if q.count() > 0:
+        if q.one() == meal_date:
+            pass
+        else:
             return jsonify(
-                userMessage="기존에 동일한 날짜의 식단이 있습니다."
-            )
-
-    if meal_id is not None:
-        from sqlalchemy.exc import IntegrityError
-        try:
-            meal_date.meal_id = meal_id
-        except IntegrityError as e:
-            return jsonify(
-                userMessage="기존에 동일한 식단의 날짜가 있습니다."
-            )
-
-    db.session.commit()
+                    userMessage="기존에 동일한 날짜의 식단이 있습니다."
+                )
+    else:
+        meal_date.meal_id = meal_id
+        meal_date.date = date_object
+        db.session.commit()
 
     return get_meal_date_by_id(meal_date_id)
 
 
 # delete 필요없을듯하당
 @api.route('/meal-dates/<int:meal_date_id>', methods=['DELETE'])
-@required_admin
+# @required_admin
 def delete_meal_date(meal_date_id):
     try:
         meal_date = db.session.query(MealDate).get(meal_date_id)
