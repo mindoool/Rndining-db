@@ -7,8 +7,9 @@ from application.models.mixin import SerializableModelMixin
 from application.lib.rest.auth_helper import required_token, required_admin
 
 
+# create - name, category
 @api.route('/menus', methods=['POST'])
-@required_token
+# @required_token
 def create_menus():
     request_params = request.get_json()
     name = request_params.get('name')
@@ -51,8 +52,8 @@ def create_menus():
 
 
 # read
-@api.route('/menus', methods=['GET'])
-@required_token
+@api.route('/menus/<int:menu_id>', methods=['GET'])
+# @required_token
 def get_menu_by_id(menu_id):
     try:
         menu = db.session.query(Menu).get(menu_id)
@@ -68,7 +69,7 @@ def get_menu_by_id(menu_id):
 
 # read
 @api.route('/menus', methods=['GET'])
-@required_token
+# @required_token
 def get_menus():
     q = db.session.query(Menu)
 
@@ -88,9 +89,9 @@ def get_menus():
 
 # update
 @api.route('/menus/<int:menu_id>', methods=['PUT'])
-@required_token
+# @required_token
 def update_menu(menu_id):
-    menu = db.session.query(Menu).get(menu_id)
+    menu = db.session.query(Menu).filter(Menu.id == menu_id).one()
 
     if menu is None:
         return jsonify(
@@ -98,29 +99,35 @@ def update_menu(menu_id):
         ), 404
 
     request_params = request.get_json()
-    name = request_params.get('name')
-    category = request_params.get('category')
+    if request_params.get('name'):
+        name = request_params.get('name')
+    else:
+        name = menu.name
 
-    if name is not None:
-        from sqlalchemy.exc import IntegrityError
-        try:
-            menu.name = name
-        except IntegrityError as e:
+    if request_params.get('category'):
+        category = request_params.get('category')
+    else:
+        category = menu.category
+
+    q = db.session.query(Menu).filter(Menu.name == name, Menu.category == category)
+    if q.count() > 0:
+        if q.one() == menu:
+            pass
+        else:
             return jsonify(
-                userMessage="기존에 동일한 이름의 메뉴가 있습니다."
-            )
-
-    if category is not None:
+                    userMessage="기존에 동일한 메뉴가 있습니다."
+                )
+    else:
+        menu.name = name
         menu.category = category
-
-    db.session.commit()
+        db.session.commit()
 
     return get_menu_by_id(menu_id)
 
 
 # delete 필요없을듯하당
 @api.route('/menus/<int:menu_id>', methods=['DELETE'])
-@required_admin
+# @required_admin
 def delete_menu(menu_id):
     try:
         menu = db.session.query(Menu).get(menu_id)

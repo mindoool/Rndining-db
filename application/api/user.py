@@ -74,7 +74,7 @@ def sign_up():
         ), 201
     except AttributeError:
         return jsonify(
-                userMessage="요청 데이터의 키밸류가 바랍직 하지 않습니다."
+                userMessage="요청 데이터의 키밸류가 바람직 하지 않습니다."
         ), 400
 
 
