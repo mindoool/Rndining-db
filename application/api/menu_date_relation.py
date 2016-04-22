@@ -88,8 +88,8 @@ def create_meal_date_relations():
             ), 403
 
     return jsonify(
-            data=menu_date_relation_list
-        ), 200
+        data=menu_date_relation_list
+    ), 200
 
 
 # read 개별
@@ -97,13 +97,12 @@ def create_meal_date_relations():
 @required_token
 def get_menu_date_relation_by_id(menu_date_relation_id):
     try:
-        menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)
         q = db.session.query(MenuDateRelation, Menu, MealDate) \
             .outerjoin(Menu.id == MenuDateRelation.menu_id) \
-            .outerjoin(MealDate.id == MenuDateRelation.meal_date_id)
+            .outerjoin(MealDate.id == MenuDateRelation.meal_date_id) \
+            .filter(MenuDateRelation.id == menu_date_relation_id)
         return jsonify(
-            # data=menu_date_relation.serialize()
-            data=map(SerializableModelMixin.serialize_row, q)
+            data=SerializableModelMixin.serialize_row(q.one())
         ), 200
 
     except:
@@ -116,7 +115,9 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
 @api.route('/menu-date-relations', methods=['GET'])
 @required_token
 def get_meal_dates():
-    q = db.session.query(MenuDateRelation)
+    q = db.session.query(MenuDateRelation, Menu, MealDate) \
+        .outerjoin(Menu.id == MenuDateRelation.menu_id) \
+        .outerjoin(MealDate.id == MenuDateRelation.meal_date_id)
 
     menu_id = request.args.get('menuId')
     meal_date_id = request.args.get('mealDateId')
@@ -128,7 +129,7 @@ def get_meal_dates():
         q = q.filter(MenuDateRelation.meal_date_id == meal_date_id)
 
     return jsonify(
-        data=map(lambda obj: obj.serialize(), q)
+        data=map(SerializableModelMixin.serialize_row(), q)
     ), 200
 
 
