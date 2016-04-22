@@ -98,8 +98,12 @@ def create_meal_date_relations():
 def get_menu_date_relation_by_id(menu_date_relation_id):
     try:
         menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)
+        q = db.session.query(MenuDateRelation, Menu, MealDate) \
+            .outerjoin(Menu.id == MenuDateRelation.menu_id) \
+            .outerjoin(MealDate.id == MenuDateRelation.meal_date_id)
         return jsonify(
-            data=menu_date_relation.serialize()
+            # data=menu_date_relation.serialize()
+            data=map(SerializableModelMixin.serialize_row, q)
         ), 200
 
     except:
