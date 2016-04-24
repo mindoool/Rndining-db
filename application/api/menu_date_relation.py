@@ -121,12 +121,21 @@ def get_meal_dates():
 
     menu_id = request.args.get('menuId')
     meal_date_id = request.args.get('mealDateId')
+    date = request.args.get('date').split('-')
+    date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
+    menu = request.args.get('menu')
 
     if menu_id is not None:
         q = q.filter(MenuDateRelation.menu_id == menu_id)
 
     if meal_date_id is not None:
         q = q.filter(MenuDateRelation.meal_date_id == meal_date_id)
+
+    if date is not None:
+        q = q.filter(MealDate.date == date_object)
+
+    if menu is not None:
+        q = q.filter(Menu.name == menu)
 
     return jsonify(
         data=map(SerializableModelMixin.serialize_row(), q)
@@ -137,7 +146,7 @@ def get_meal_dates():
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
 @required_token
 def update_menu_date_relation(menu_date_relation_id):
-    menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)
+    menu_date_relation = db.session.query(MenuDateRelation).filter(MenuDateRelation.id == menu_date_relation_id).one()
 
     if menu_date_relation is None:
         return jsonify(
@@ -145,30 +154,31 @@ def update_menu_date_relation(menu_date_relation_id):
         ), 404
 
     request_params = request.get_json()
-    menu_id = request_params.get('menuId')
-    meal_date_id = request_params.get('mealDateId')
 
-    if menu_id is not None:
-        from sqlalchemy.exc import IntegrityError
-        try:
-            menu_date_relation.menu_id = menu_id
-        except IntegrityError as e:
+    if request_params.get('menuId'):
+        menu_id = request_params.get('menuId')
+    else:
+        menu_id = menu_date_relation.menu_id
+
+    if request_params.get('mealDateId'):
+        meal_date_id = request_params.get('mealDateId')
+    else:
+        meal_date_id = menu_date_relation.meal_date_id
+
+    q = db.session.query(MenuDateRelation).filter(MenuDateRelation.menu_id == menu_id, MenuDateRelation.meal_date_id)
+    if q.count() > 0:
+        if q.one() == menu_date_relation:
+            pass
+        else:
             return jsonify(
-                userMessage="기존에 동일한 메뉴의 관계가 있습니다."
+                userMessage="기존에 동일한 관계가 있습니다."
             )
+    else:
+        menu_date_relation.menu_id = menu_id
+        menu_date_relation.meal_date_id = meal_date_id
+        db.session.commit()
 
-    if meal_date_id is not None:
-        from sqlalchemy.exc import IntegrityError
-        try:
-            menu_date_relation.meal_date_id = meal_date_id
-        except IntegrityError as e:
-            return jsonify(
-                userMessage="기존에 동일한 날짜의 관게가 있습니다."
-            )
-
-    db.session.commit()
-
-    return get_menu_date_relation_by_id(meal_date_id)
+    return get_menu_date_relation_by_id(menu_date_relation_id)
 
 
 # delete 필요없을듯하당
