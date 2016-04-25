@@ -12,7 +12,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 # create, content, user_id, board_id
 @api.route('/meal-dates/<int:meal_date_id>/comments', methods=['POST'])
-# @required_token
+@required_token
 def create_comments(meal_date_id, request_user_id=None):
     request_params = request.get_json()
     content = request_params.get('content')
@@ -33,7 +33,7 @@ def create_comments(meal_date_id, request_user_id=None):
         meal_date = db.session.query(MealDate).filter(MealDate.id == meal_date_id).one()
     except:
         return jsonify(
-            userMessage="댓글 작성한 식단날짜를 잘못 선택하셨습니다."
+            userMessage="댓글 작성할 식단날짜를 잘못 선택하셨습니다."
         )
 
     if request_user_id is None:
@@ -62,7 +62,7 @@ def create_comments(meal_date_id, request_user_id=None):
 
 # read
 @api.route('/meal-dates/<int:meal_date_id>/comments/<int:comment_id>', methods=['GET'])
-# @required_token
+@required_token
 def get_comment_by_id(meal_date_id, comment_id, request_user_id=None):
     comment = db.session.query(Comment, User) \
         .outerjoin(User, User.id == Comment.user_id) \
@@ -105,7 +105,7 @@ def get_comments(meal_date_id, request_user_id=None):
 
 # update
 @api.route('/meal-dates/<int:meal_date_id>/comments/<int:comment_id>', methods=['PUT'])
-# @required_token
+@required_token
 def update_comment_by_id(meal_date_id, comment_id, request_user_id=None):
     request_params = request.get_json()
     content = request_params.get('content')
@@ -129,7 +129,7 @@ def update_comment_by_id(meal_date_id, comment_id, request_user_id=None):
 
 # delete
 @api.route('/meal-dates/<int:meal_date_id>/comments/<int:comment_id>', methods=['DELETE'])
-# @required_token
+@required_token
 def delete_comment_by_id(meal_date_id, comment_id, request_user_id=None):
     comment = db.session.query(Comment).get(comment_id)
 
