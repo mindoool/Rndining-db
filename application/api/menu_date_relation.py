@@ -12,7 +12,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 
 @api.route('/menu-date-relations', methods=['POST'])
-@required_token
+# @required_token
 def create_meal_date_relations():
     request_params = request.get_json()
     meal_id = request_params.get('mealId')
@@ -41,8 +41,8 @@ def create_meal_date_relations():
             userMessage="식단을 입력해주세요."
         )
     else:
-        meal_date = db.session.query(MealDate).filter(MealDate.date == date_object, MealDate.meal_id == meal_id)
-        if meal_date.count() > 0:
+        meal_date = db.session.query(MealDate).filter(MealDate.date == date_object, MealDate.meal_id == meal_id).one()
+        if meal_date:
             meal_date_id = meal_date.id
         else:
             meal_date = MealDate(date=date_object, meal_id=meal_id)
@@ -58,8 +58,8 @@ def create_meal_date_relations():
         )
     else:
         for key in menus.keys():
-            menu = db.session.query(Menu).filter(Menu.name == menus[key])
-            if menu.count() > 0:
+            menu = db.session.query(Menu).filter(Menu.name == menus[key]).one()
+            if menu:
                 menu_id_list.append(menu.id)
             else:
                 menu = Menu(name=menus[key], category=key)
@@ -73,9 +73,10 @@ def create_meal_date_relations():
         q = db.session.query(MenuDateRelation).filter(MenuDateRelation.menu_id == menu_id,
                                                       MenuDateRelation.meal_date_id == meal_date_id)
         if q.count() > 0:
-            return jsonify(
-                userMessage="이미 등록되어있는 관계입니다."
-            ), 409
+            continue
+            # return jsonify(
+            #     userMessage="이미 등록되어있는 관계입니다."
+            # ), 409
 
         try:
             menu_date_relation = MenuDateRelation(menu_id=menu_id, meal_date_id=meal_date_id)
@@ -94,12 +95,12 @@ def create_meal_date_relations():
 
 # read 개별
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['GET'])
-@required_token
+# @required_token
 def get_menu_date_relation_by_id(menu_date_relation_id):
     try:
         q = db.session.query(MenuDateRelation, Menu, MealDate) \
-            .outerjoin(Menu.id == MenuDateRelation.menu_id) \
-            .outerjoin(MealDate.id == MenuDateRelation.meal_date_id) \
+            .outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
+            .outerjoin(MealDate, MealDate.id == MenuDateRelation.meal_date_id) \
             .filter(MenuDateRelation.id == menu_date_relation_id)
         return jsonify(
             data=SerializableModelMixin.serialize_row(q.one())
@@ -113,16 +114,16 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
 
 # read
 @api.route('/menu-date-relations', methods=['GET'])
-@required_token
-def get_meal_dates():
+# @required_token
+def get_menu_dates():
     q = db.session.query(MenuDateRelation, Menu, MealDate) \
-        .outerjoin(Menu.id == MenuDateRelation.menu_id) \
-        .outerjoin(MealDate.id == MenuDateRelation.meal_date_id)
+        .outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
+        .outerjoin(MealDate, MealDate.id == MenuDateRelation.meal_date_id)
 
     menu_id = request.args.get('menuId')
     meal_date_id = request.args.get('mealDateId')
-    date = request.args.get('date').split('-')
-    date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
+    date = request.args.get('date')
+
     menu = request.args.get('menu')
 
     if menu_id is not None:
@@ -132,19 +133,21 @@ def get_meal_dates():
         q = q.filter(MenuDateRelation.meal_date_id == meal_date_id)
 
     if date is not None:
+        date = request.args.get('date').split('-')
+        date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
         q = q.filter(MealDate.date == date_object)
 
     if menu is not None:
         q = q.filter(Menu.name == menu)
 
     return jsonify(
-        data=map(SerializableModelMixin.serialize_row(), q)
+        data=map(SerializableModelMixin.serialize_row, q)
     ), 200
 
 
 # update
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
-@required_token
+# @required_token
 def update_menu_date_relation(menu_date_relation_id):
     menu_date_relation = db.session.query(MenuDateRelation).filter(MenuDateRelation.id == menu_date_relation_id).one()
 
@@ -183,7 +186,7 @@ def update_menu_date_relation(menu_date_relation_id):
 
 # delete 필요없을듯하당
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['DELETE'])
-@required_admin
+# @required_admin
 def delete_menu_date_relation(menu_date_relation_id):
     try:
         menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)

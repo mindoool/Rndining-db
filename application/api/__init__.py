@@ -6,5 +6,6 @@ from . import (
     meal,
     meal_date,
     menu,
-    user
+    user,
+    menu_date_relation
 )
