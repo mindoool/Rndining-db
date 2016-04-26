@@ -151,5 +151,5 @@ def delete_comment_by_id(meal_date_id, comment_id, request_user_id=None):
             ), 200
         except:
             return jsonify(
-                userMessage="server error, try again"
+                userMessage="오류가 발생했습니다. 관리자에 문의하세요."
             ), 403
