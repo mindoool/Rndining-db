@@ -34,7 +34,7 @@ def create_boards(request_user_id=None):
     if is_notice == True:
         if user.is_admin == 0:
             return jsonify(
-                userMessage="공지사항은 어드민만 작성할 수 있습니다."
+                userMessage="공지사항은 관리자만 작성할 수 있습니다."
             )
 
     try:
@@ -52,7 +52,7 @@ def create_boards(request_user_id=None):
     except Exception as e:
         print e.message
         return jsonify(
-            userMessage="server deny your request, check param value"
+            userMessage="오류가 발생했습니다. 관리자에게 문의해주세요."
         ), 403
 
 
@@ -67,7 +67,7 @@ def get_board_by_id(board_id, request_user_id=None):
         ), 200
     except:
         return jsonify(
-            userMessage="공지사항을 찾을 수 없습니다."
+            userMessage="게시물을 찾을 수 없습니다."
         ), 404
 
 
@@ -116,7 +116,7 @@ def update_boards(board_id, request_user_id=None):
             (board, user) = q.one()
     except:
         return jsonify(
-            userMessage="can not find board"
+            userMessage="게시물을 찾을 수 없습니다."
         ), 404
 
     user = db.session.query(User).get(request_user_id)
