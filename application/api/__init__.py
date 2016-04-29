@@ -8,5 +8,6 @@ from . import (
     menu,
     user,
     menu_date_relation,
-    comment
+    comment,
+    board
 )

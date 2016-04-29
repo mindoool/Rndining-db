@@ -61,7 +61,7 @@ def create_boards(request_user_id=None):
 @required_token
 def get_board_by_id(board_id, request_user_id=None):
     try:
-        q = db.session.query(Board, User).outerjoin(User, User.id == Board.user_id).filter(Board.id == board.id)
+        q = db.session.query(Board, User).outerjoin(User, User.id == Board.user_id).filter(Board.id == board_id)
         return jsonify(
             data=SerializableModelMixin.serialize_row(q.one())
         ), 200
@@ -104,10 +104,8 @@ def get_boards(request_user_id=None):
     ), 200
 
 
-# 검색 하는거 필요 full index search in sqlalchemy
 # update
 @api.route('/boards/<int:board_id>', methods=['PUT'])
-@required_admin
 @required_token
 def update_boards(board_id, request_user_id=None):
     try:
