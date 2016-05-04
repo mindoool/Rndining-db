@@ -116,32 +116,31 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
 @api.route('/menu-date-relations', methods=['GET'])
 # @required_token
 def get_menu_dates():
-    q = db.session.query(MenuDateRelation, Menu, MealDate) \
-        .outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
-        .outerjoin(MealDate, MealDate.id == MenuDateRelation.meal_date_id)
-
-    menu_id = request.args.get('menuId')
-    meal_date_id = request.args.get('mealDateId')
     date = request.args.get('date')
-
-    menu = request.args.get('menu')
-
-    if menu_id is not None:
-        q = q.filter(MenuDateRelation.menu_id == menu_id)
-
-    if meal_date_id is not None:
-        q = q.filter(MenuDateRelation.meal_date_id == meal_date_id)
-
     if date is not None:
         date = request.args.get('date').split('-')
         date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
-        q = q.filter(MealDate.date == date_object)
+    else:
+        date_object = datetime.date.today()
 
-    if menu is not None:
-        q = q.filter(Menu.name == menu)
+    q1 = db.session.query(MealDate).filter(MealDate.date == date_object)
+
+    meal_dates = {}
+    meal_date_ids = []
+    for m in q1:
+        serialized_data = m.serialize()
+        serialized_data['menus'] = []
+        meal_dates[m.id] = serialized_data
+
+        meal_date_ids.append(m.id)
+
+    q2 = db.session.query(MenuDateRelation, Menu).outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
+        .filter(MenuDateRelation.meal_date_id.in_(meal_date_ids))
+    for (menu_date_relation, menu) in q2:
+        meal_dates[menu_date_relation.meal_date_id]['menus'].append(menu.serialize())
 
     return jsonify(
-        data=map(SerializableModelMixin.serialize_row, q)
+        data=meal_dates
     ), 200
 
 
