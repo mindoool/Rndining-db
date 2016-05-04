@@ -4,6 +4,7 @@ from flask import request, jsonify
 from . import api
 from application import db
 from application.models.menu_date_relation import MenuDateRelation
+from application.models.meal import Meal
 from application.models.meal_date import MealDate
 from application.models.menu import Menu
 from application.api.meal_date import create_meal_dates
@@ -41,10 +42,10 @@ def create_meal_date_relations():
             userMessage="식단을 입력해주세요."
         )
     else:
-        meal_date = db.session.query(MealDate).filter(MealDate.date == date_object, MealDate.meal_id == meal_id).one()
-        if meal_date:
+        try:
+            meal_date = db.session.query(MealDate).filter(MealDate.date == date_object, MealDate.meal_id == meal_id).one()
             meal_date_id = meal_date.id
-        else:
+        except:
             meal_date = MealDate(date=date_object, meal_id=meal_id)
             db.session.add(meal_date)
             db.session.commit()
@@ -113,7 +114,7 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
 
 
 # read
-@api.route('/menu-date-relations', methods=['GET'])
+@api.route('/meal-date-menus', methods=['GET'])
 # @required_token
 def get_menu_dates():
     date = request.args.get('date')
@@ -123,16 +124,17 @@ def get_menu_dates():
     else:
         date_object = datetime.date.today()
 
-    q1 = db.session.query(MealDate).filter(MealDate.date == date_object)
+    q1 = db.session.query(MealDate, Meal).outerjoin(Meal, Meal.id == MealDate.meal_id) \
+        .filter(MealDate.date == date_object)
 
     meal_dates = {}
     meal_date_ids = []
-    for m in q1:
-        serialized_data = m.serialize()
+    for row in q1:
+        (meal_date, meal) = row
+        serialized_data = SerializableModelMixin.serialize_row(row)
         serialized_data['menus'] = []
-        meal_dates[m.id] = serialized_data
-
-        meal_date_ids.append(m.id)
+        meal_dates[meal_date.id] = serialized_data
+        meal_date_ids.append(meal_date.id)
 
     q2 = db.session.query(MenuDateRelation, Menu).outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
         .filter(MenuDateRelation.meal_date_id.in_(meal_date_ids))
@@ -140,7 +142,7 @@ def get_menu_dates():
         meal_dates[menu_date_relation.meal_date_id]['menus'].append(menu.serialize())
 
     return jsonify(
-        data=meal_dates
+        data=meal_dates.values()
     ), 200
 
 
