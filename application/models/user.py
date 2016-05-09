@@ -19,6 +19,10 @@ class User(db.Model, TimeStampMixin, SerializableModelMixin):
     is_deleted = db.Column(db.Boolean, default=False)
     # is_activated = db.Column(db.Boolean, default=True)
 
+    # 추가정보
+    gender = db.Column(db.Enum('male', 'female'))
+    birth = db.Column(db.Date)
+
     def __repr__(self):
         return '<User %r>' % self.id
 
@@ -30,7 +34,7 @@ class User(db.Model, TimeStampMixin, SerializableModelMixin):
         })
 
     @classmethod
-    def image_and_password_process(cls, request_body):
+    def password_process(cls, request_body):
         """
         image, password p
         :param request_body:
@@ -43,13 +47,18 @@ class User(db.Model, TimeStampMixin, SerializableModelMixin):
         #     request_body['profile_serving_url'] = image.serving_url
 
         if 'password' in request_body:
+            if request_body['password'] is None:
+                request_body['password'] = password_encode(request_body.get('newPassword'))
             print request_body
-            request_body['password'] = password_encode(request_body.get('password'))
+        if 'newPassword' in request_body:
+            request_body.pop('newPassword', None)
+        if 'newPasswordCheck' in request_body:
+            request_body.pop('newPasswordCheck', None)
 
         return request_body
 
     def update_data(self, **kwargs):
         # pre operation before
-        kwargs = User.image_and_password_process(kwargs)
+        kwargs = User.password_process(kwargs)
         # check constraint
         return super(User, self).update_data(**kwargs)

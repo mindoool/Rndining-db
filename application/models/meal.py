@@ -7,4 +7,4 @@ class Meal(db.Model, TimeStampMixin, SerializableModelMixin):
     id = db.Column(db.Integer, primary_key=True)
     day = db.Column(db.Enum('mon', 'tue', 'wed', 'thu', 'fri'), nullable=False)
     time = db.Column(db.Enum('morning', 'lunch', 'dinner'))
-    category = db.Column(db.Enum('noodle', 'salad', 'takeout', 'korean','western', 'dinner', 'dinner-noodle'))
+    category = db.Column(db.Enum('noodle', 'salad', 'takeout', 'korean', 'western', 'dinner', 'dinner-noodle'))
