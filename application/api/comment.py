@@ -2,7 +2,7 @@
 from flask import request, jsonify
 from . import api
 from application import db
-from application.models.commnet import Comment
+from application.models.comment import Comment
 from application.models.meal_date import MealDate
 from application.models.user import User
 from application.models.menu import Menu
@@ -136,7 +136,7 @@ def delete_comment_by_id(meal_date_id, comment_id, request_user_id=None):
     if comment.user_id != request_user_id:
         return jsonify(
             userMessage="댓글은 본인만 삭제 가능합니다."
-        )
+        ), 401
 
     if comment is None:
         return jsonify(

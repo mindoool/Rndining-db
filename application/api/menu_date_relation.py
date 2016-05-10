@@ -3,11 +3,12 @@ import datetime
 from flask import request, jsonify
 from . import api
 from application import db
+from application.models.comment import Comment
 from application.models.menu_date_relation import MenuDateRelation
 from application.models.meal import Meal
 from application.models.meal_date import MealDate
 from application.models.menu import Menu
-from application.api.meal_date import create_meal_dates
+from application.models.user import User
 from application.models.mixin import SerializableModelMixin
 from application.lib.rest.auth_helper import required_token, required_admin
 
@@ -43,7 +44,8 @@ def create_meal_date_relations():
         )
     else:
         try:
-            meal_date = db.session.query(MealDate).filter(MealDate.date == date_object, MealDate.meal_id == meal_id).one()
+            meal_date = db.session.query(MealDate).filter(MealDate.date == date_object,
+                                                          MealDate.meal_id == meal_id).one()
             meal_date_id = meal_date.id
         except:
             meal_date = MealDate(date=date_object, meal_id=meal_id)
@@ -124,17 +126,31 @@ def get_menu_dates():
     else:
         date_object = datetime.date.today()
 
-    q1 = db.session.query(MealDate, Meal).outerjoin(Meal, Meal.id == MealDate.meal_id) \
+    q1 = db.session.query(MealDate, Meal, Comment, User) \
+        .outerjoin(Meal, Meal.id == MealDate.meal_id) \
+        .outerjoin(Comment, Comment.meal_date_id == MealDate.id) \
+        .outerjoin(User, User.id == Comment.user_id) \
         .filter(MealDate.date == date_object)
 
     meal_dates = {}
     meal_date_ids = []
+    prev_meal_date_id = None
     for row in q1:
-        (meal_date, meal) = row
-        serialized_data = SerializableModelMixin.serialize_row(row)
-        serialized_data['menus'] = []
-        meal_dates[meal_date.id] = serialized_data
-        meal_date_ids.append(meal_date.id)
+        (meal_date, meal, comment, user) = row
+        if prev_meal_date_id != meal_date.id:
+            meal_date_obj = meal_date.serialize()
+            meal_date_obj['meal'] = meal.serialize()
+            meal_date_obj['comments'] = []
+            meal_date_obj['menus'] = []
+            meal_dates[meal_date.id] = meal_date_obj
+            meal_date_ids.append(meal_date.id)
+
+        if comment is not None:
+            comment_obj = comment.serialize()
+            comment_obj['user'] = user.serialize()
+            meal_date_obj['comments'].append(comment_obj)
+
+        prev_meal_date_id = meal_date.id
 
     q2 = db.session.query(MenuDateRelation, Menu).outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
         .filter(MenuDateRelation.meal_date_id.in_(meal_date_ids))
@@ -143,10 +159,9 @@ def get_menu_dates():
 
     return jsonify(
         data=meal_dates.values()
-    ), 200
+    ), 200  # update
 
 
-# update
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
 # @required_token
 def update_menu_date_relation(menu_date_relation_id):
