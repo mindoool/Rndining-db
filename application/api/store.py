@@ -53,3 +53,24 @@ def create_stores():
         return jsonify(
             userMessage="오류가 발생했습니다. 관리자에게 문의해주세요."
         ), 403
+
+
+# read 개별
+@api.route('/stores/<int:store_id>', methods=['GET'])
+@required_token
+def get_store_by_id(store_id):
+    """
+    ms
+    :param store_id:
+    :return:
+    """
+    try:
+        store = db.session.query(Store).get(store_id)
+        return jsonify(
+            data=store.serialize()
+        ), 200
+
+    except:
+        return jsonify(
+            userMessage="해당 가게를 찾을 수 없습니다."
+        ), 404
