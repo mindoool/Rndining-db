@@ -74,3 +74,6 @@ def get_store_by_id(store_id):
         return jsonify(
             userMessage="해당 가게를 찾을 수 없습니다."
         ), 404
+
+
+# read 복수
