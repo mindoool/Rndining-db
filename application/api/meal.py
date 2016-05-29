@@ -113,7 +113,7 @@ def get_meals():
 
 # update
 @api.route('/meals/<int:meal_id>', methods=['PUT'])
-# @required_token
+@required_token
 def update_meal(meal_id):
     """
     :param meal_id:
@@ -155,7 +155,7 @@ def update_meal(meal_id):
 
 # delete 필요없을듯하당
 @api.route('/meals/<int:meal_id>', methods=['DELETE'])
-# @required_admin
+@required_admin
 def delete_meal(meal_id):
     try:
         meal = db.session.query(Meal).get(meal_id)

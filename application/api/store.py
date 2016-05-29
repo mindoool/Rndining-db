@@ -98,3 +98,57 @@ def get_stores():
     return jsonify(
         data=map(lambda obj: obj.serialize(), q)
     ), 200
+
+
+# update
+@api.route('/stores/<int:store_id>', methods=['PUT'])
+@required_token
+def update_store(store_id):
+    """
+    :param store_id:
+    :return:
+    """
+    store = db.session.query(Store).get(store_id)
+
+    if store is None:
+        return jsonify(
+            userMessage="가게를 찾을 수 없습니다."
+        ), 404
+
+    request_params = request.get_json()
+    name = request_params.get('name')
+    category = request_params.get('category')
+
+    if category is not None and category not in ['korean', 'western', 'soup', 'meet']:
+        return jsonify(
+            userMessage="'한식', '양식', '찌개', '고기' 중 선택해주세요."
+        ), 403
+
+    store = store.update_data(**request_params)
+    db.session.commit()
+
+    return get_store_by_id(store_id)
+
+
+# delete 필요없을듯하당
+@api.route('/stores/<int:store_id>', methods=['DELETE'])
+@required_admin
+def delete_store(store_id):
+    try:
+        store = db.session.query(Store).get(store_id)
+
+        try:
+            db.session.delete(store)
+            db.session.commit()
+            return jsonify(
+                userMessage="삭제가 완료되었습니다."
+            ), 200
+        except:
+            return jsonify(
+                userMessage="삭제 실패."
+            ), 403
+
+    except:
+        return jsonify(
+            userMessage="가게를 찾을 수 없습니다."
+        ), 404
