@@ -77,3 +77,24 @@ def get_store_by_id(store_id):
 
 
 # read 복수
+@api.route('/stores', methods=['GET'])
+@required_token
+def get_stores():
+    """
+    ms
+    :return: request_user_id
+    """
+    q = db.session.query(Store)
+
+    name = request.args.get('name')
+    category = request.args.get('category')
+
+    if name is not None:
+        q = q.filter(Store.name == name)
+
+    if category is not None:
+        q = q.filter(Store.category == category)
+
+    return jsonify(
+        data=map(lambda obj: obj.serialize(), q)
+    ), 200

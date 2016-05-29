@@ -85,7 +85,7 @@ def get_meal_by_id(meal_id):
 
 # read
 @api.route('/meals', methods=['GET'])
-# @required_token
+@required_token
 def get_meals():
     """
     ms
