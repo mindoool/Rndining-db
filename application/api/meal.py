@@ -8,7 +8,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 
 @api.route('/meals', methods=['POST'])
-# @required_token
+@required_token
 def create_meals():
     """
     ms
@@ -64,7 +64,7 @@ def create_meals():
 
 # read 개별
 @api.route('/meals/<int:meal_id>', methods=['GET'])
-# @required_token
+@required_token
 def get_meal_by_id(meal_id):
     """
     ms
