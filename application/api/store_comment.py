@@ -5,7 +5,6 @@ from application import db
 from application.models.store_comment import StoreComment
 from application.models.store import Store
 from application.models.user import User
-from application.models.menu import Menu
 from application.models.mixin import SerializableModelMixin
 from application.lib.rest.auth_helper import required_token, required_admin
 

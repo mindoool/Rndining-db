@@ -14,8 +14,8 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 
 @api.route('/menu-date-relations', methods=['POST'])
-# @required_token
-def create_meal_date_relations():
+@required_token
+def create_menu_date_relations():
     request_params = request.get_json()
     meal_id = request_params.get('mealId')
     date = request_params.get('date').split('-')
@@ -98,7 +98,7 @@ def create_meal_date_relations():
 
 # read 개별
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['GET'])
-# @required_token
+@required_token
 def get_menu_date_relation_by_id(menu_date_relation_id):
     try:
         q = db.session.query(MenuDateRelation, Menu, MealDate) \
@@ -117,7 +117,7 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
 
 # read
 @api.route('/meal-date-menus', methods=['GET'])
-# @required_token
+@required_token
 def get_menu_dates():
     date = request.args.get('date')
     if date is not None:
@@ -163,7 +163,7 @@ def get_menu_dates():
 
 
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
-# @required_token
+@required_token
 def update_menu_date_relation(menu_date_relation_id):
     menu_date_relation = db.session.query(MenuDateRelation).filter(MenuDateRelation.id == menu_date_relation_id).one()
 
@@ -202,7 +202,7 @@ def update_menu_date_relation(menu_date_relation_id):
 
 # delete 필요없을듯하당
 @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['DELETE'])
-# @required_admin
+@required_admin
 def delete_menu_date_relation(menu_date_relation_id):
     try:
         menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)
