@@ -184,7 +184,7 @@ def update_menu_date_relation(menu_date_relation_id):
     else:
         meal_date_id = menu_date_relation.meal_date_id
 
-    q = db.session.query(MenuDateRelation).filter(MenuDateRelation.menu_id == menu_id, MenuDateRelation.meal_date_id)
+    q = db.session.query(MenuDateRelation).filter(MenuDateRelation.menu_id == menu_id, MenuDateRelation.meal_date_id == meal_date_id)
     if q.count() > 0:
         if q.one() == menu_date_relation:
             pass

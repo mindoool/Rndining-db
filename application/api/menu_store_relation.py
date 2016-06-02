@@ -66,7 +66,7 @@ def create_menu_store_relations():
     menu_store_relation_list = []
     for menu_id in menu_id_list:
         q = db.session.query(MenuStoreRelation).filter(MenuStoreRelation.menu_id == menu_id,
-                                                      MenuStoreRelation.store_id == store_id)
+                                                       MenuStoreRelation.store_id == store_id)
         if q.count() > 0:
             continue
             # return jsonify(
@@ -149,63 +149,65 @@ def get_menu_stores():
 
 
 # update
-# @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
-# # @required_token
-# def update_menu_date_relation(menu_date_relation_id):
-#     menu_date_relation = db.session.query(MenuDateRelation).filter(MenuDateRelation.id == menu_date_relation_id).one()
-#
-#     if menu_date_relation is None:
-#         return jsonify(
-#             userMessage="관계를 찾을 수 없습니다."
-#         ), 404
-#
-#     request_params = request.get_json()
-#
-#     if request_params.get('menuId'):
-#         menu_id = request_params.get('menuId')
-#     else:
-#         menu_id = menu_date_relation.menu_id
-#
-#     if request_params.get('mealDateId'):
-#         meal_date_id = request_params.get('mealDateId')
-#     else:
-#         meal_date_id = menu_date_relation.meal_date_id
-#
-#     q = db.session.query(MenuDateRelation).filter(MenuDateRelation.menu_id == menu_id, MenuDateRelation.meal_date_id)
-#     if q.count() > 0:
-#         if q.one() == menu_date_relation:
-#             pass
-#         else:
-#             return jsonify(
-#                 userMessage="기존에 동일한 관계가 있습니다."
-#             )
-#     else:
-#         menu_date_relation.menu_id = menu_id
-#         menu_date_relation.meal_date_id = meal_date_id
-#         db.session.commit()
-#
-#     return get_menu_date_relation_by_id(menu_date_relation_id)
-#
-#
-# # delete 필요없을듯하당
-# @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['DELETE'])
-# # @required_admin
-# def delete_menu_date_relation(menu_date_relation_id):
-#     try:
-#         menu_date_relation = db.session.query(MenuDateRelation).get(menu_date_relation_id)
-#
-#         try:
-#             db.session.delete(menu_date_relation)
-#             db.session.commit()
-#             return jsonify(
-#                 userMessage="삭제가 완료되었습니다."
-#             ), 200
-#         except:
-#             return jsonify(
-#                 userMessage="삭제 실패."
-#             ), 403
-#
-#     except:
-#         return jsonify(
-#             userMessage="해당 관계를 찾을 수 없습니다."
-#         ), 404
+@api.route('/menu-store-relations/<int:menu_store_relation_id>', methods=['PUT'])
+@required_token
+def update_menu_store_relation(menu_store_relation_id):
+    menu_store_relation = db.session.query(MenuStoreRelation).filter(
+        MenuStoreRelation.id == menu_store_relation_id).one()
+
+    if menu_store_relation is None:
+        return jsonify(
+            userMessage="관계를 찾을 수 없습니다."
+        ), 404
+
+    request_params = request.get_json()
+
+    if request_params.get('menuId'):
+        menu_id = request_params.get('menuId')
+    else:
+        menu_id = menu_store_relation.menu_id
+
+    if request_params.get('storeId'):
+        store_id = request_params.get('storeId')
+    else:
+        store_id = menu_store_relation.store_id
+
+    q = db.session.query(MenuStoreRelation).filter(MenuStoreRelation.menu_id == menu_id,
+                                                   MenuStoreRelation.store_id == store_id)
+    if q.count() > 0:
+        if q.one() == menu_store_relation:
+            pass
+        else:
+            return jsonify(
+                userMessage="기존에 동일한 관계가 있습니다."
+            )
+    else:
+        menu_store_relation.menu_id = menu_id
+        menu_store_relation.meal_date_id = store_id
+        db.session.commit()
+
+    return get_menu_store_relation_by_id(menu_store_relation_id)
+
+
+# delete 필요없을듯하당
+@api.route('/menu-store-relations/<int:menu_store_relation_id>', methods=['DELETE'])
+@required_admin
+def delete_menu_store_relation(menu_store_relation_id):
+    try:
+        menu_store_relation = db.session.query(MenuStoreRelation).get(menu_store_relation_id)
+
+        try:
+            db.session.delete(menu_store_relation)
+            db.session.commit()
+            return jsonify(
+                userMessage="삭제가 완료되었습니다."
+            ), 200
+        except:
+            return jsonify(
+                userMessage="삭제 실패."
+            ), 403
+
+    except:
+        return jsonify(
+            userMessage="해당 관계를 찾을 수 없습니다."
+        ), 404
