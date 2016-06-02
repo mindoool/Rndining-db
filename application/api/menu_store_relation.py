@@ -3,7 +3,7 @@ import datetime
 from flask import request, jsonify
 from . import api
 from application import db
-from application.models.comment import Comment
+from application.models.store_comment import StoreComment
 from application.models.menu_store_relation import MenuStoreRelation
 from application.models.store import Store
 from application.models.meal import Meal
@@ -89,14 +89,14 @@ def create_menu_store_relations():
 
 
 # read 개별
-@api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['GET'])
+@api.route('/menu-store-relations/<int:menu_store_relation_id>', methods=['GET'])
 # @required_token
-def get_menu_date_relation_by_id(menu_date_relation_id):
+def get_menu_store_relation_by_id(menu_store_relation_id):
     try:
-        q = db.session.query(MenuDateRelation, Menu, MealDate) \
-            .outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
-            .outerjoin(MealDate, MealDate.id == MenuDateRelation.meal_date_id) \
-            .filter(MenuDateRelation.id == menu_date_relation_id)
+        q = db.session.query(MenuStoreRelation, Menu, Store) \
+            .outerjoin(Menu, Menu.id == MenuStoreRelation.menu_id) \
+            .outerjoin(Store, Store.id == MenuStoreRelation.store_id) \
+            .filter(MenuStoreRelation.id == menu_store_relation_id)
         return jsonify(
             data=SerializableModelMixin.serialize_row(q.one())
         ), 200
@@ -107,53 +107,48 @@ def get_menu_date_relation_by_id(menu_date_relation_id):
         ), 404
 
 
-# # read
-# @api.route('/meal-date-menus', methods=['GET'])
-# @required_token
-# def get_menu_dates():
-#     date = request.args.get('date')
-#     if date is not None:
-#         date = request.args.get('date').split('-')
-#         date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
-#     else:
-#         date_object = datetime.date.today()
-#
-#     q1 = db.session.query(MealDate, Meal, Comment, User) \
-#         .outerjoin(Meal, Meal.id == MealDate.meal_id) \
-#         .outerjoin(Comment, Comment.meal_date_id == MealDate.id) \
-#         .outerjoin(User, User.id == Comment.user_id) \
-#         .filter(MealDate.date == date_object)
-#
-#     meal_dates = {}
-#     meal_date_ids = []
-#     prev_meal_date_id = None
-#     for row in q1:
-#         (meal_date, meal, comment, user) = row
-#         if prev_meal_date_id != meal_date.id:
-#             meal_date_obj = meal_date.serialize()
-#             meal_date_obj['meal'] = meal.serialize()
-#             meal_date_obj['comments'] = []
-#             meal_date_obj['menus'] = []
-#             meal_dates[meal_date.id] = meal_date_obj
-#             meal_date_ids.append(meal_date.id)
-#
-#         if comment is not None:
-#             comment_obj = comment.serialize()
-#             comment_obj['user'] = user.serialize()
-#             meal_date_obj['comments'].append(comment_obj)
-#
-#         prev_meal_date_id = meal_date.id
-#
-#     q2 = db.session.query(MenuDateRelation, Menu).outerjoin(Menu, Menu.id == MenuDateRelation.menu_id) \
-#         .filter(MenuDateRelation.meal_date_id.in_(meal_date_ids))
-#     for (menu_date_relation, menu) in q2:
-#         meal_dates[menu_date_relation.meal_date_id]['menus'].append(menu.serialize())
-#
-#     return jsonify(
-#         data=meal_dates.values()
-#     ), 200  # update
-#
-#
+# read
+@api.route('/menu-store-relations', methods=['GET'])
+@required_token
+def get_menu_stores():
+    q1 = db.session.query(Store, StoreComment, User) \
+        .outerjoin(StoreComment, StoreComment.store_id == MenuStoreRelation.store_id) \
+        .outerjoin(User, User.id == StoreComment.user_id)
+
+    name = request.args.get('name')
+    if name is not None:
+        q1 = q1.filter(Store.name.like('%' + name + '%'))
+
+    stores = {}
+    store_ids = []
+    prev_store_id = None
+    for row in q1:
+        (store, store_comment, user) = row
+        if prev_store_id != store.id:
+            store_obj = store.serialize()
+            store_obj['comments'] = []
+            store_obj['menus'] = []
+            stores[store.id] = store_obj
+            store_ids.append(store.id)
+
+        if store_comment is not None:
+            store_comment_obj = store_comment.serialize()
+            store_comment_obj['user'] = user.serialize()
+            store_obj['comments'].append(store_comment_obj)
+
+        prev_store_id = store.id
+
+    q2 = db.session.query(MenuStoreRelation, Menu).outerjoin(Menu, Menu.id == MenuStoreRelation.menu_id) \
+        .filter(MenuStoreRelation.store_id.in_(store_ids))
+    for (menu_store_relation, menu) in q2:
+        store[menu_store_relation.store_id]['menus'].append(menu.serialize())
+
+    return jsonify(
+        data=stores.values()
+    ), 200
+
+
+# update
 # @api.route('/menu-date-relations/<int:menu_date_relation_id>', methods=['PUT'])
 # # @required_token
 # def update_menu_date_relation(menu_date_relation_id):
