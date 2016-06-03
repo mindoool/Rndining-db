@@ -11,5 +11,6 @@ from . import (
     comment,
     board,
     store,
-    store_comment
+    store_comment,
+    menu_store_relation
 )
