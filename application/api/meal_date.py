@@ -10,7 +10,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 
 @api.route('/meal-dates', methods=['POST'])
-# @required_token
+@required_token
 def create_meal_dates():
     request_params = request.get_json()
     date = request_params.get('date').split('-')
@@ -58,7 +58,7 @@ def create_meal_dates():
 
 # read 개별
 @api.route('/meal-dates/<int:meal_date_id>', methods=['GET'])
-# @required_token
+@required_token
 def get_meal_date_by_id(meal_date_id):
     try:
         meal_date = db.session.query(MealDate, Meal) \
@@ -76,7 +76,7 @@ def get_meal_date_by_id(meal_date_id):
 
 # read
 @api.route('/meal-dates', methods=['GET'])
-# @required_token
+@required_token
 def get_meal_dates():
     q = db.session.query(MealDate, Meal) \
         .join(Meal, Meal.id == MealDate.meal_id)
@@ -99,7 +99,7 @@ def get_meal_dates():
 
 # update
 @api.route('/meal-dates/<int:meal_date_id>', methods=['PUT'])
-# @required_token
+@required_token
 def update_meal_date(meal_date_id):
     meal_date = db.session.query(MealDate).filter(MealDate.id == meal_date_id).one()
 
@@ -138,7 +138,7 @@ def update_meal_date(meal_date_id):
 
 # delete 필요없을듯하당
 @api.route('/meal-dates/<int:meal_date_id>', methods=['DELETE'])
-# @required_admin
+@required_admin
 def delete_meal_date(meal_date_id):
     try:
         meal_date = db.session.query(MealDate).get(meal_date_id)

@@ -9,7 +9,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 
 # create - name, category
 @api.route('/menus', methods=['POST'])
-# @required_token
+@required_token
 def create_menus():
     request_params = request.get_json()
     name = request_params.get('name')
@@ -53,7 +53,7 @@ def create_menus():
 
 # read
 @api.route('/menus/<int:menu_id>', methods=['GET'])
-# @required_token
+@required_token
 def get_menu_by_id(menu_id):
     try:
         menu = db.session.query(Menu).get(menu_id)
@@ -69,7 +69,7 @@ def get_menu_by_id(menu_id):
 
 # read
 @api.route('/menus', methods=['GET'])
-# @required_token
+@required_token
 def get_menus():
     q = db.session.query(Menu)
 
@@ -89,7 +89,7 @@ def get_menus():
 
 # update
 @api.route('/menus/<int:menu_id>', methods=['PUT'])
-# @required_token
+@required_token
 def update_menu(menu_id):
     menu = db.session.query(Menu).filter(Menu.id == menu_id).one()
 
@@ -127,7 +127,7 @@ def update_menu(menu_id):
 
 # delete 필요없을듯하당
 @api.route('/menus/<int:menu_id>', methods=['DELETE'])
-# @required_admin
+@required_admin
 def delete_menu(menu_id):
     try:
         menu = db.session.query(Menu).get(menu_id)
