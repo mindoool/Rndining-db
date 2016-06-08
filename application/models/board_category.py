@@ -13,3 +13,5 @@ class BoardCategory(db.Model, TimeStampMixin, SerializableModelMixin):
     content = db.Column(db.String(100), nullable=False)
     is_notice = db.Column(db.Boolean, default=False)  # 공지인지 아닌지
     is_chair = db.Column(db.Boolean, default=False)  # notice일 때 체어공지인지 아닌지
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', foreign_keys=[user_id])
