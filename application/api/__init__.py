@@ -10,6 +10,7 @@ from . import (
     menu_date_relation,
     comment,
     board,
+    board_category,
     store,
     store_comment,
     menu_store_relation
