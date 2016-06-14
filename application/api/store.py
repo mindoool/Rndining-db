@@ -100,6 +100,7 @@ def get_stores():
     ), 200
 
 
+
 # update
 @api.route('/stores/<int:store_id>', methods=['PUT'])
 @required_token
