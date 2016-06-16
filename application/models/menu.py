@@ -10,4 +10,4 @@ class Menu(db.Model, TimeStampMixin, SerializableModelMixin):
     price = db.Column(db.String(100))
     like_count = db.Column(db.Integer, default=0)
     category = db.Column(
-        db.Enum('rice', 'soup', 'porridge', 'maindish', 'sidedish', 'bread', 'drink', 'fruit', 'noodle', 'salad', 'tea'))
+        db.Enum('rice', 'soup', 'porridge', 'maindish', 'sidedish', 'bread', 'drink', 'fruit', 'noodle', 'salad', "dressing", 'tea'))
