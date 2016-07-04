@@ -17,6 +17,7 @@ from application.lib.rest.auth_helper import required_token, required_admin
 @required_token
 def create_menu_date_relations():
     request_params = request.get_json()
+    obj = request_params.get('obj')
     meal_id = request_params.get('mealId')
     date = request_params.get('date').split('-')
     date_object = datetime.date(int(date[0]), int(date[1]), int(date[2]))
